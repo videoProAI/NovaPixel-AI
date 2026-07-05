@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dilnava Mere - Full Music Video Experience</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #000;
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* ===== CINEMATIC VIDEO CONTAINER ===== */
+#video-container {
+  width: 100%;
+  max-width: 960px;
+  position: relative;
+  background: #000;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(124,58,237,0.3);
+}
+
+#video-canvas {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16/9;
+}
+
+/* ===== LYRICS OVERLAY ===== */
+#lyrics-overlay {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 15px 30px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  z-index: 100;
+  transition: all 0.4s ease;
+}
+#lyrics-text {
+  font-size: 22px;
+  font-weight: 500;
+  color: #fce7f3;
+  text-shadow: 0 0 20px rgba(244,114,182,0.6), 0 2px 10px rgba(0,0,0,0.8);
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  min-height: 36px;
+}
+#lyrics-text .highlight {
+  color: #f472b6;
+  text-shadow: 0 0 30px rgba(244,114,182,0.9);
+}
+
+/* ===== PROGRESS BAR ===== */
+#progress-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+  z-index: 101;
+}
+#progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
+  transition: width 0.1s linear;
+}
+#time-display {
+  position: absolute;
+  bottom: 15px;
+  right: 20px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  z-index: 101;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== CONTROLS ===== */
+#controls {
+  width: 100%;
+  max-width: 960px;
+  padding: 15px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  background: linear-gradient(180deg, #0a0a14, #050510);
+}
+#play-btn {
+  padding: 12px 40px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+  box-shadow: 0 0 30px rgba(236,72,153,0.4);
+  text-transform: uppercase;
+}
+#play-btn:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(236,72,153,0.6); }
+#play-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.mode-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid #4a2a7a;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-btn:hover, .mode-btn.active { border-color: #f472b6; color: #f472b6; background: rgba(244,114,182,0.1); }
+
+.vol-row { display: flex; align-items: center; gap: 8px; }
+.vol-row label { font-size: 13px; color: #9ca3af; }
+input[type=range] { -webkit-appearance: none; width: 100px; height: 5px; background: #2d1b4e; border-radius: 3px; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #f472b6; cursor: pointer; box-shadow: 0 0 10px rgba(244,114,182,0.5); }
+
+/* ===== UPLOAD ===== */
+#upload-section {
+  width: 100%;
+  max-width: 960px;
+  padding: 30px;
+  text-align: center;
+}
+#upload-zone {
+  border: 2px dashed #4a2a7a;
+  border-radius: 20px;
+  padding: 40px 30px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: linear-gradient(135deg, #0d0018, #1a0030);
+  margin-bottom: 15px;
+}
+#upload-zone:hover { border-color: #f472b6; background: linear-gradient(135deg, #130028, #1a0a3a); }
+#upload-zone .ztitle { font-size: 20px; color: #e2e8f0; margin-bottom: 8px; }
+#upload-zone .zsub { font-size: 14px; color: #6b7280; }
+#file-input { display: none; }
+#song-title { font-size: 16px; color: #f472b6; margin-top: 10px; display: none; }
+
+/* ===== INFO ===== */
+#info-bar {
+  width: 100%;
+  max-width: 960px;
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+  background: #050510;
+}
+</style>
+</head>
+<body>
+
+<div id="upload-section">
+  <div id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+    <div class="ztitle">🎵 "Dilnava Mere.mp3" Upload Karein</div>
+    <div class="zsub">Drag & drop ya click karke select karein — Music Video automatically generate hoga!</div>
+    <input type="file" id="file-input" accept="audio/*" onchange="loadFile(this.files[0])">
+  </div>
+  <div id="song-title"></div>
+</div>
+
+<div id="video-container" style="display:none;">
+  <canvas id="video-canvas"></canvas>
+  <div id="lyrics-overlay">
+    <div id="lyrics-text">🎵 Music Video Ready — Play Karein 🎵</div>
+  </div>
+  <div id="time-display">0:00 / 0:00</div>
+  <div id="progress-container" onclick="seek(event)">
+    <div id="progress-fill"></div>
+  </div>
+</div>
+
+<div id="controls" style="display:none;">
+  <button id="play-btn" onclick="togglePlay()" disabled>▶ Play Video</button>
+  <button class="mode-btn active" onclick="setScene('romantic')" id="s-romantic">💕 Romantic</button>
+  <button class="mode-btn" onclick="setScene('dance')" id="s-dance">💃 Dance</button>
+  <button class="mode-btn" onclick="setScene('rain')" id="s-rain">🌧️ Rain</button>
+  <button class="mode-btn" onclick="setScene('night')" id="s-night">🌙 Night</button>
+  <div class="vol-row"><label>🔊</label><input type="range" min="0" max="1" step="0.01" value="0.8" oninput="setVol(this.value)"></div>
+</div>
+
+<div id="info-bar">
+  💡 Tip: "Dilnava Mere.mp3" upload karein — AI Music Video automatically generate hoga with synced lyrics & animations!
+</div>
+
+<script>
+// ===== LYRICS WITH TIMESTAMPS =====
+const lyricsData = [
+  { time: 0, text: "🎵 Dilnava Mere 🎵", emotion: "intro" },
+  { time: 2, text: "Kal raaste mein gham mil gaya tha", emotion: "sad" },
+  { time: 6, text: "Lag ke gale main ro diya", emotion: "sad" },
+  { time: 10, text: "Jo sirf mera tha sirf mera", emotion: "longing" },
+  { time: 14, text: "Maine usey kyun kho diya", emotion: "sad" },
+  { time: 18, text: "Haan woh aankhein jinhe main", emotion: "memory" },
+  { time: 22, text: "Choomta tha bewajah", emotion: "memory" },
+  { time: 26, text: "Pyaar mere liye kyun", emotion: "question" },
+  { time: 30, text: "Unme baaki na raha", emotion: "sad" },
+  { time: 34, text: "💕 Humnava mere tu hai toh", emotion: "love" },
+  { time: 38, text: "Meri saansein chale", emotion: "love" },
+  { time: 42, text: "Bata de kaise main jiyunga tere bina", emotion: "love" },
+  { time: 50, text: "Ho.. Humnava mere tu hai toh", emotion: "love" },
+  { time: 54, text: "Meri saansein chale", emotion: "love" },
+  { time: 58, text: "Bata de kaise main jiyunga tere bina", emotion: "love" },
+  { time: 66, text: "Har waqt dil ko jo sataaye", emotion: "pain" },
+  { time: 70, text: "Aisi kami hai tu", emotion: "pain" },
+  { time: 74, text: "Main bhi na jaanu yeh ke", emotion: "confusion" },
+  { time: 78, text: "Itna kyun laazmi hai tu", emotion: "realization" },
+  { time: 82, text: "Neendein jaa ke na lauti", emotion: "sleepless" },
+  { time: 86, text: "Kitni raatein dhal gayi", emotion: "time" },
+  { time: 90, text: "Itne taare gine ke", emotion: "counting" },
+  { time: 94, text: "Ungliyaan bhi jal gayi", emotion: "pain" },
+  { time: 98, text: "💕 Humnava mere tu hai toh", emotion: "love" },
+  { time: 102, text: "Meri saansein chale", emotion: "love" },
+  { time: 106, text: "Bata de kaise main jiyunga tere bina", emotion: "love" },
+  { time: 114, text: "Tu aakhri aansu o yaara", emotion: "emotion" },
+  { time: 118, text: "Hai aakhiri tu gham", emotion: "emotion" },
+  { time: 122, text: "Haan.. dil ab kahaan hai jo dobara", emotion: "lost" },
+  { time: 126, text: "De dein kisi ko hum", emotion: "sacrifice" },
+  { time: 130, text: "Apni shaamon mein hissa", emotion: "sharing" },
+  { time: 134, text: "Phir kisi ko na diya", emotion: "loyalty" },
+  { time: 138, text: "Ishq tere bina bhi", emotion: "devotion" },
+  { time: 142, text: "Maine tujhse hi kiya", emotion: "devotion" },
+  { time: 146, text: "💕 Humnava mere tu hai toh", emotion: "love" },
+  { time: 150, text: "Meri saansein chale", emotion: "love" },
+  { time: 154, text: "Bata de kaise main jiyunga tere bina", emotion: "love" },
+  { time: 162, text: "Ho.. Faasle na de ki main hu", emotion: "pleading" },
+  { time: 166, text: "Aasre tere", emotion: "pleading" },
+  { time: 170, text: "Bata de kaise main jiyunga tere bina", emotion: "love" },
+  { time: 178, text: "Aazma raha mujhe kyun", emotion: "question" },
+  { time: 182, text: "Aa bhi ja kahin se ab tu", emotion: "calling" },
+  { time: 186, text: "Kaise main jiyunga tere bina", emotion: "desperation" },
+  { time: 194, text: "Seene mein jo dhadkane hain", emotion: "heartbeat" },
+  { time: 198, text: "Tere naam se chale hain", emotion: "devotion" },
+  { time: 202, text: "Kaise main jiyunga tere bina", emotion: "desperation" },
+  { time: 210, text: "💕 Humnava mere tu hai toh", emotion: "love" },
+  { time: 214, text: "Meri saansein chale", emotion: "love" },
+  { time: 218, text: "Bata de kaise main jiyunga tere bina", emotion: "love" },
+  { time: 226, text: "🎵 The End 🎵", emotion: "end" }
+];
+
+// ===== SCENE CONFIGURATIONS =====
+const scenes = {
+  romantic: {
+    bgColors: ['#1a0030', '#2d0050', '#0d0018'],
+    particleColor: '#f472b6',
+    particleType: 'heart',
+    lightColor: 'rgba(244,114,182,0.3)',
+    floorColor: '#1a0030',
+    mood: 'romantic'
+  },
+  dance: {
+    bgColors: ['#0a0014', '#1a0030', '#2d1b4e'],
+    particleColor: '#c084fc',
+    particleType: 'note',
+    lightColor: 'rgba(192,132,252,0.3)',
+    floorColor: '#2d0050',
+    mood: 'energetic'
+  },
+  rain: {
+    bgColors: ['#0a0a1a', '#1a1a2e', '#0d0d1a'],
+    particleColor: '#60a5fa',
+    particleType: 'rain',
+    lightColor: 'rgba(96,165,250,0.2)',
+    floorColor: '#0a0a1a',
+    mood: 'melancholy'
+  },
+  night: {
+    bgColors: ['#050510', '#0a0a1a', '#0d0018'],
+    particleColor: '#fbbf24',
+    particleType: 'star',
+    lightColor: 'rgba(251,191,36,0.2)',
+    floorColor: '#0a0a14',
+    mood: 'dreamy'
+  }
+};
+
+let currentScene = 'romantic';
+let audioCtx, analyser, gainNode, source, audioBuffer;
+let isPlaying = false, startTime = 0, pauseOffset = 0, duration = 0;
+let canvas, ctx, animId;
+let particles = [];
+let currentLyricIndex = -1;
+let beatEnergy = 0;
+
+function initCanvas() {
+  canvas = document.getElementById('video-canvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+}
+
+function resizeCanvas() {
+  const container = document.getElementById('video-container');
+  const rect = container.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.width * 9 / 16;
+}
+
+function setScene(s) {
+  currentScene = s;
+  ['romantic','dance','rain','night'].forEach(x => {
+    document.getElementById('s-'+x).classList.toggle('active', x === s);
+  });
+}
+
+function handleDrop(e) { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadFile(f); }
+
+function loadFile(file) {
+  if (!file) return;
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('video-container').style.display = 'block';
+  document.getElementById('controls').style.display = 'flex';
+  document.getElementById('song-title').style.display = 'block';
+  document.getElementById('song-title').textContent = '🎵 ' + file.name;
+  document.getElementById('play-btn').disabled = false;
+
+  initCanvas();
+
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (gainNode) gainNode.disconnect();
+  if (analyser) analyser.disconnect();
+  if (source) { try { source.stop(); } catch(e){} }
+
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = 0.8;
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 512;
+  analyser.smoothingTimeConstant = 0.85;
+  gainNode.connect(analyser);
+  analyser.connect(audioCtx.destination);
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    audioCtx.decodeAudioData(ev.target.result, buf => {
+      audioBuffer = buf;
+      duration = buf.duration;
+      isPlaying = false;
+      pauseOffset = 0;
+      document.getElementById('play-btn').textContent = '▶ Play Video';
+      if (!animId) renderLoop();
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setVol(v) { if (gainNode) gainNode.gain.value = v; }
+
+function togglePlay() {
+  if (!audioBuffer) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (isPlaying) {
+    pauseOffset = audioCtx.currentTime - startTime;
+    source.stop(); isPlaying = false;
+    document.getElementById('play-btn').textContent = '▶ Play Video';
+  } else {
+    source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(gainNode);
+    startTime = audioCtx.currentTime - pauseOffset;
+    source.start(0, pauseOffset);
+    isPlaying = true;
+    document.getElementById('play-btn').textContent = '⏸ Pause';
+    source.onended = () => { 
+      if (isPlaying) { 
+        isPlaying = false; 
+        pauseOffset = 0; 
+        document.getElementById('play-btn').textContent = '▶ Play Video'; 
+      } 
+    };
+  }
+}
+
+function seek(e) {
+  if (!audioBuffer) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  pauseOffset = ((e.clientX - rect.left) / rect.width) * duration;
+  if (isPlaying) {
+    source.stop();
+    source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(gainNode);
+    startTime = audioCtx.currentTime - pauseOffset;
+    source.start(0, pauseOffset);
+    source.onended = () => { if (isPlaying) { isPlaying = false; pauseOffset = 0; document.getElementById('play-btn').textContent = '▶ Play Video'; } };
+  }
+}
+
+function fmt(s) { const m = Math.floor(s/60), sec = Math.floor(s%60); return m + ':' + (sec<10?'0':'') + sec; }
+
+function getEnergy() {
+  if (!analyser) return 0;
+  const freq = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freq);
+  let sum = 0;
+  for (let i = 0; i < Math.min(64, freq.length); i++) sum += freq[i];
+  return sum / (64 * 255);
+}
+
+function updateLyrics(elapsed) {
+  for (let i = lyricsData.length - 1; i >= 0; i--) {
+    if (elapsed >= lyricsData[i].time) {
+      if (currentLyricIndex !== i) {
+        currentLyricIndex = i;
+        const el = document.getElementById('lyrics-text');
+        el.style.opacity = '0';
+        setTimeout(() => {
+          el.textContent = lyricsData[i].text;
+          el.style.opacity = '1';
+          // Auto-switch scene based on emotion
+          const emotion = lyricsData[i].emotion;
+          if (emotion === 'love' || emotion === 'romantic') setScene('romantic');
+          else if (emotion === 'sad' || emotion === 'pain' || emotion === 'melancholy') setScene('rain');
+          else if (emotion === 'energetic' || emotion === 'dance') setScene('dance');
+          else if (emotion === 'dreamy' || emotion === 'night') setScene('night');
+        }, 200);
+      }
+      break;
+    }
+  }
+}
+
+// ===== PARTICLE SYSTEM =====
+class Particle {
+  constructor(w, h, type, color) {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.size = Math.random() * 3 + 1;
+    this.speedX = (Math.random() - 0.5) * 2;
+    this.speedY = (Math.random() - 0.5) * 2;
+    this.life = 1;
+    this.decay = Math.random() * 0.01 + 0.005;
+    this.type = type;
+    this.color = color;
+    this.w = w;
+    this.h = h;
+
+    if (type === 'rain') {
+      this.speedY = Math.random() * 8 + 5;
+      this.speedX = (Math.random() - 0.5) * 0.5;
+      this.size = Math.random() * 2 + 1;
+      this.y = -10;
+    } else if (type === 'heart') {
+      this.speedY = -Math.random() * 2 - 0.5;
+      this.speedX = (Math.random() - 0.5) * 1;
+      this.size = Math.random() * 8 + 4;
+    } else if (type === 'star') {
+      this.speedY = -Math.random() * 0.5 - 0.2;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.size = Math.random() * 2 + 0.5;
+      this.twinkle = Math.random() * Math.PI * 2;
+    }
+  }
+
+  update(energy) {
+    this.x += this.speedX * (1 + energy * 2);
+    this.y += this.speedY * (1 + energy * 2);
+    this.life -= this.decay;
+
+    if (this.type === 'heart') {
+      this.speedX += Math.sin(Date.now() * 0.003) * 0.1;
+    }
+    if (this.type === 'star') {
+      this.twinkle += 0.05;
+    }
+
+    if (this.type === 'rain' && this.y > this.h) {
+      this.y = -10;
+      this.x = Math.random() * this.w;
+      this.life = 1;
+    }
+    if (this.type === 'heart' && this.y < -20) {
+      this.life = 0;
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = this.life * 0.8;
+
+    if (this.type === 'heart') {
+      ctx.fillStyle = this.color;
+      ctx.font = `${this.size}px Arial`;
+      ctx.fillText('💕', this.x, this.y);
+    } else if (this.type === 'star') {
+      const alpha = (Math.sin(this.twinkle) + 1) / 2;
+      ctx.fillStyle = this.color;
+      ctx.globalAlpha = alpha * this.life;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.type === 'rain') {
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = this.size;
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(this.x + this.speedX, this.y + 10);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// ===== DRAW CHARACTERS =====
+function drawBoy(ctx, x, y, scale, energy, time) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  const bounce = Math.sin(time * 3) * 3 * energy;
+  const sway = Math.sin(time * 2) * 5 * energy;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0, 85, 25, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body bounce
+  ctx.translate(0, bounce);
+  ctx.rotate(sway * 0.01);
+
+  // Legs
+  ctx.fillStyle = '#1e3a5f';
+  const legSwing = Math.sin(time * 4) * 8 * energy;
+
+  // Left leg
+  ctx.save();
+  ctx.translate(-8, 40);
+  ctx.rotate(-legSwing * 0.02);
+  ctx.fillRect(-6, 0, 12, 35);
+  // Shoe
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(-7, 32, 14, 8);
+  ctx.restore();
+
+  // Right leg
+  ctx.save();
+  ctx.translate(8, 40);
+  ctx.rotate(legSwing * 0.02);
+  ctx.fillStyle = '#1e3a5f';
+  ctx.fillRect(-6, 0, 12, 35);
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(-7, 32, 14, 8);
+  ctx.restore();
+
+  // Torso
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath();
+  ctx.roundRect(-18, -5, 36, 45, 6);
+  ctx.fill();
+
+  // Arms
+  const armSwing = Math.sin(time * 3) * 20 * energy;
+
+  // Left arm
+  ctx.save();
+  ctx.translate(-18, 5);
+  ctx.rotate(-0.3 + armSwing * 0.02);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillRect(-5, 0, 10, 32);
+  // Hand
+  ctx.fillStyle = '#d4855a';
+  ctx.beginPath();
+  ctx.arc(0, 34, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Right arm
+  ctx.save();
+  ctx.translate(18, 5);
+  ctx.rotate(0.3 - armSwing * 0.02);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillRect(-5, 0, 10, 32);
+  ctx.fillStyle = '#d4855a';
+  ctx.beginPath();
+  ctx.arc(0, 34, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Head
+  ctx.fillStyle = '#f5c89a';
+  ctx.beginPath();
+  ctx.ellipse(0, -18, 16, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle = '#1a0a00';
+  ctx.beginPath();
+  ctx.ellipse(0, -26, 18, 10, 0, Math.PI, 0);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#1a0a00';
+  ctx.beginPath();
+  ctx.arc(-5, -18, 2.5, 0, Math.PI * 2);
+  ctx.arc(5, -18, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth (singing)
+  const mouthOpen = 3 + Math.sin(time * 8) * 2 * energy;
+  ctx.fillStyle = '#c0392b';
+  ctx.beginPath();
+  ctx.ellipse(0, -10, 5, mouthOpen * 0.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawGirl(ctx, x, y, scale, energy, time) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  const bounce = Math.sin(time * 3 + 0.5) * 4 * energy;
+  const sway = Math.sin(time * 2 + 0.5) * 6 * energy;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0, 85, 25, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.translate(0, bounce);
+  ctx.rotate(sway * 0.01);
+
+  // Legs
+  const legSwing = Math.sin(time * 4 + 0.5) * 10 * energy;
+
+  ctx.fillStyle = '#f5c89a';
+  // Left leg
+  ctx.save();
+  ctx.translate(-7, 40);
+  ctx.rotate(-legSwing * 0.02);
+  ctx.fillRect(-5, 0, 10, 32);
+  ctx.restore();
+
+  // Right leg
+  ctx.save();
+  ctx.translate(7, 40);
+  ctx.rotate(legSwing * 0.02);
+  ctx.fillRect(-5, 0, 10, 32);
+  ctx.restore();
+
+  // Skirt
+  ctx.fillStyle = '#be185d';
+  ctx.beginPath();
+  ctx.moveTo(-22, 40);
+  ctx.lineTo(22, 40);
+  ctx.lineTo(18, 10);
+  ctx.lineTo(-18, 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Skirt sway
+  const skirtSway = Math.sin(time * 3) * 3 * energy;
+  ctx.save();
+  ctx.translate(0, 25);
+  ctx.rotate(skirtSway * 0.01);
+  ctx.fillStyle = '#be185d';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 24, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Skirt border
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Torso
+  ctx.fillStyle = '#ec4899';
+  ctx.beginPath();
+  ctx.roundRect(-14, -5, 28, 38, 8);
+  ctx.fill();
+
+  // Arms (graceful)
+  const armSwing = Math.sin(time * 2.5) * 25 * energy;
+
+  // Left arm
+  ctx.save();
+  ctx.translate(-14, 5);
+  ctx.rotate(-0.5 + armSwing * 0.015);
+  ctx.fillStyle = '#ec4899';
+  ctx.fillRect(-4, 0, 8, 28);
+  ctx.fillStyle = '#f5c89a';
+  ctx.beginPath();
+  ctx.arc(0, 30, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Right arm
+  ctx.save();
+  ctx.translate(14, 5);
+  ctx.rotate(0.5 - armSwing * 0.015);
+  ctx.fillStyle = '#ec4899';
+  ctx.fillRect(-4, 0, 8, 28);
+  ctx.fillStyle = '#f5c89a';
+  ctx.beginPath();
+  ctx.arc(0, 30, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Head
+  ctx.fillStyle = '#f5c89a';
+  ctx.beginPath();
+  ctx.ellipse(0, -18, 15, 17, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair (long flowing)
+  const hairSway = Math.sin(time * 2) * 5 * energy;
+  ctx.fillStyle = '#1a0a00';
+  // Back hair
+  ctx.save();
+  ctx.translate(0, -15);
+  ctx.rotate(hairSway * 0.02);
+  ctx.beginPath();
+  ctx.ellipse(0, 5, 20, 28, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // Front hair
+  ctx.beginPath();
+  ctx.ellipse(0, -24, 17, 9, 0, Math.PI, 0);
+  ctx.fill();
+
+  // Eyes with shine
+  ctx.fillStyle = '#1a0a00';
+  ctx.beginPath();
+  ctx.arc(-5, -18, 2.5, 0, Math.PI * 2);
+  ctx.arc(5, -18, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(-4, -19, 1, 0, Math.PI * 2);
+  ctx.arc(6, -19, 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Blush
+  ctx.fillStyle = 'rgba(255,100,100,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(-8, -12, 4, 2, 0, 0, Math.PI * 2);
+  ctx.ellipse(8, -12, 4, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth
+  const mouthOpen = 2 + Math.sin(time * 8 + 0.5) * 1.5 * energy;
+  ctx.fillStyle = '#c0392b';
+  ctx.beginPath();
+  ctx.ellipse(0, -10, 4, mouthOpen * 0.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ===== MAIN RENDER LOOP =====
+function renderLoop() {
+  animId = requestAnimationFrame(renderLoop);
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const time = Date.now() * 0.001;
+
+  // Get audio energy
+  beatEnergy = getEnergy();
+
+  // Get elapsed time
+  let elapsed = isPlaying ? (audioCtx ? audioCtx.currentTime - startTime : 0) : pauseOffset;
+  elapsed = Math.max(0, Math.min(elapsed, duration || 1));
+
+  // Update lyrics & progress
+  updateLyrics(elapsed);
+  if (duration > 0) {
+    document.getElementById('progress-fill').style.width = (elapsed / duration * 100).toFixed(1) + '%';
+    document.getElementById('time-display').textContent = fmt(elapsed) + ' / ' + fmt(duration);
+  }
+
+  // Get scene config
+  const scene = scenes[currentScene];
+
+  // ===== DRAW BACKGROUND =====
+  // Gradient sky
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, scene.bgColors[0]);
+  grad.addColorStop(0.5, scene.bgColors[1]);
+  grad.addColorStop(1, scene.bgColors[2]);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars / background particles
+  if (currentScene === 'night' || currentScene === 'romantic') {
+    for (let i = 0; i < 50; i++) {
+      const sx = (Math.sin(i * 12.3 + time * 0.1) * 0.5 + 0.5) * W;
+      const sy = (Math.cos(i * 7.7 + time * 0.05) * 0.5 + 0.5) * H * 0.6;
+      const alpha = (Math.sin(time * 2 + i) + 1) / 2 * 0.8;
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, Math.random() * 1.5 + 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Moon
+  if (currentScene === 'night' || currentScene === 'romantic') {
+    ctx.fillStyle = '#fef3c7';
+    ctx.shadowColor = '#fbbf24';
+    ctx.shadowBlur = 30 + beatEnergy * 20;
+    ctx.beginPath();
+    ctx.arc(W * 0.85, H * 0.15, 25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // Floor
+  ctx.fillStyle = scene.floorColor;
+  ctx.fillRect(0, H * 0.78, W, H * 0.22);
+  // Floor glow line
+  ctx.fillStyle = scene.lightColor;
+  ctx.fillRect(0, H * 0.78, W, 2);
+
+  // Spotlight effects
+  ctx.save();
+  ctx.globalAlpha = 0.15 + beatEnergy * 0.1;
+  const spotGrad1 = ctx.createRadialGradient(W * 0.35, 0, 0, W * 0.35, H * 0.5, 150);
+  spotGrad1.addColorStop(0, scene.lightColor);
+  spotGrad1.addColorStop(1, 'transparent');
+  ctx.fillStyle = spotGrad1;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.25, 0);
+  ctx.lineTo(W * 0.45, 0);
+  ctx.lineTo(W * 0.55, H * 0.78);
+  ctx.lineTo(W * 0.15, H * 0.78);
+  ctx.closePath();
+  ctx.fill();
+
+  const spotGrad2 = ctx.createRadialGradient(W * 0.65, 0, 0, W * 0.65, H * 0.5, 150);
+  spotGrad2.addColorStop(0, scene.lightColor);
+  spotGrad2.addColorStop(1, 'transparent');
+  ctx.fillStyle = spotGrad2;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.55, 0);
+  ctx.lineTo(W * 0.75, 0);
+  ctx.lineTo(W * 0.85, H * 0.78);
+  ctx.lineTo(W * 0.45, H * 0.78);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // ===== DRAW CHARACTERS =====
+  const boyX = W * 0.35;
+  const girlX = W * 0.65;
+  const charY = H * 0.72;
+  const scale = Math.min(W, H) * 0.0012;
+
+  drawBoy(ctx, boyX, charY, scale, beatEnergy, time);
+  drawGirl(ctx, girlX, charY, scale, beatEnergy, time);
+
+  // Heart between them
+  if (beatEnergy > 0.3) {
+    ctx.save();
+    ctx.globalAlpha = beatEnergy * 0.6;
+    ctx.font = `${20 + beatEnergy * 15}px Arial`;
+    ctx.fillStyle = '#f472b6';
+    ctx.textAlign = 'center';
+    ctx.fillText('💕', W * 0.5, charY - 60 - beatEnergy * 30);
+    ctx.restore();
+  }
+
+  // ===== PARTICLES =====
+  // Spawn new particles
+  if (isPlaying && Math.random() < 0.1 + beatEnergy * 0.3) {
+    particles.push(new Particle(W, H, scene.particleType, scene.particleColor));
+  }
+
+  // Update & draw particles
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.update(beatEnergy);
+    p.draw(ctx);
+  });
+
+  // ===== AUDIO VISUALIZER BAR =====
+  if (analyser) {
+    const freq = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(freq);
+    const barCount = 60;
+    const barW = W / barCount;
+
+    for (let i = 0; i < barCount; i++) {
+      const v = freq[Math.floor(i * freq.length / barCount)] / 255;
+      const barH = v * H * 0.15;
+      const hue = (i * 6 + time * 50) % 360;
+
+      ctx.fillStyle = `hsla(${hue}, 80%, 60%, ${0.3 + v * 0.4})`;
+      ctx.fillRect(i * barW, H - barH, barW - 1, barH);
+    }
+  }
+
+  // ===== VIGNETTE =====
+  const vig = ctx.createRadialGradient(W/2, H/2, W*0.3, W/2, H/2, W*0.7);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(0,0,0,0.4)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+}
+
+// Start
+initCanvas();
+</script>
+</body>
+</html>
